@@ -1,6 +1,6 @@
 {
   "log": {
-    "loglevel": "warning",
+    "loglevel": "info",
     "access": "/var/log/v2ray/access.log",
     "error": "/var/log/v2ray/error.log"
   },
@@ -14,11 +14,21 @@
             "id": "b831381d-6324-4d53-ad4f-8cda48b30811",
             "level": 1,
             "alterId": 64
+          },
+          {
+            "id": "a931381d-6324-4d53-ad4f-8cda48b30812",
+            "level": 1,
+            "alterId": 32
           }
         ]
       },
       "streamSettings": {
-        "network": "tcp"
+        "network": "tcp",
+        "security": "none"
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls"]
       }
     },
     {
@@ -30,38 +40,96 @@
           {
             "user": "admin",
             "pass": "admin123"
+          },
+          {
+            "user": "user",
+            "pass": "password123"
           }
-        ]
+        ],
+        "udp": true
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls"]
+      }
+    },
+    {
+      "port": 8390,
+      "protocol": "http",
+      "settings": {
+        "timeout": 360
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls"]
       }
     }
   ],
   "outbounds": [
     {
       "protocol": "freedom",
-      "settings": {},
+      "settings": {
+        "domainStrategy": "UseIP"
+      },
       "tag": "direct"
     },
     {
       "protocol": "blackhole",
-      "settings": {},
+      "settings": {
+        "response": {
+          "type": "http"
+        }
+      },
       "tag": "blocked"
+    },
+    {
+      "protocol": "freedom",
+      "settings": {},
+      "streamSettings": {
+        "network": "tcp"
+      },
+      "tag": "tcp-out"
     }
   ],
   "routing": {
+    "domainStrategy": "IPOnDemand",
     "rules": [
       {
         "type": "field",
-        "outboundTag": "blocked",
         "domain": [
-          "ads.example.com"
-        ]
+          "geosite:category-ads"
+        ],
+        "outboundTag": "blocked"
       },
       {
         "type": "field",
-        "outboundTag": "direct",
         "domain": [
-          "example.com"
-        ]
+          "geosite:category-ir"
+        ],
+        "outboundTag": "direct"
+      },
+      {
+        "type": "field",
+        "ip": [
+          "geoip:ir"
+        ],
+        "outboundTag": "direct"
+      },
+      {
+        "type": "field",
+        "domain": [
+          "ads.example.com",
+          "tracker.example.com"
+        ],
+        "outboundTag": "blocked"
+      },
+      {
+        "type": "field",
+        "domain": [
+          "example.com",
+          "google.com"
+        ],
+        "outboundTag": "direct"
       }
     ]
   },
@@ -69,7 +137,49 @@
     "servers": [
       "8.8.8.8",
       "8.8.4.4",
-      "1.1.1.1"
+      "1.1.1.1",
+      "1.0.0.1"
+    ],
+    "hosts": {
+      "example.com": "127.0.0.1"
+    }
+  },
+  "policy": {
+    "levels": {
+      "0": {
+        "handshake": 4,
+        "connIdle": 300,
+        "uplinkOnly": 2,
+        "downlinkOnly": 5,
+        "statsUserUplink": false,
+        "statsUserDownlink": false,
+        "bufferSize": 10240
+      },
+      "1": {
+        "handshake": 4,
+        "connIdle": 300,
+        "uplinkOnly": 0,
+        "downlinkOnly": 0,
+        "statsUserUplink": false,
+        "statsUserDownlink": false,
+        "bufferSize": 10240
+      }
+    },
+    "system": {
+      "statsInboundUplink": true,
+      "statsInboundDownlink": true,
+      "statsOutboundUplink": true,
+      "statsOutboundDownlink": true
+    }
+  },
+  "stats": {},
+  "api": {
+    "tag": "api",
+    "access": "api",
+    "services": [
+      "HandlerService",
+      "LoggerService",
+      "StatsService"
     ]
   }
 }
